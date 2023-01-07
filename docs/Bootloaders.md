@@ -143,6 +143,48 @@ like:
 avrdude -carduino -patmega168 -P/dev/ttyACM0 -b115200 -D -Uflash:w:out/klipper.elf.hex:i
 ```
 
+## RP2040 (Pi Pico, SKR Pico)
+
+The RP2040 is normally flashed via rebooting the device into flashing
+mode.
+
+This can involve holding a button or shorting a jumper and
+resetting the device, which then shows up as a hard drive over USB.
+
+You can then drag and drop the klipper.uf2 to the drive.
+
+The alternative method to flashing is via the SWD header.
+This can be connected directly to the GPIO of a Raspberry Pi and
+flashed via OpenOCD.
+
+Three connections are required, GNG, SWDIO and SWSLK.
+
+| Raspberry Pi    | RP2040  |
+|-----------------|---------|
+| GND (Pin 20)    | SWD GND |
+| GPIO24 (Pin 18) | SWDIO   |
+| GPIO25 (Pin 22) | SWCLK   |
+
+This requires the use of the RaspberryPi foundations fork of OpenOCD
+which can be installed with the following:
+```
+git clone https://github.com/raspberrypi/openocd.git --branch picoprobe --depth=1 --no-single-branch
+cd openocd/
+./bootstrap
+./configure --enable-ftdi --enable-sysfsgpio --enable-bcm2835gpio
+make -j4
+sudo make install
+```
+
+To flash klipper use the following:
+```
+openocd -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg -c "program out/klipper.elf verify reset exit"
+```
+The flashing process should take less than two seconds.
+
+Output of the process successing can be 
+[seen here](https://gist.github.com/shift/e228265c3811450862b9e9ad15443d69).
+
 ## SAM3 micro-controllers (Arduino Due)
 
 It is not common to use a bootloader with the SAM3 mcu. The chip
